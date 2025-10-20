@@ -1,6 +1,2 @@
 # Snowflake Streaming Ingest SDK
-snowflake-ingest>=2.0.0
-
-# Additional dependencies (usually installed with snowflake-ingest)
-snowflake-connector-python>=3.0.0
-
+snowpipe-streaming

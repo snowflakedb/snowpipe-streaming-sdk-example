@@ -10,7 +10,6 @@ This example shows how to:
 """
 
 from datetime import datetime
-import time
 import uuid
 import os
 
@@ -63,17 +62,19 @@ def main():
     print("All rows submitted. Waiting for ingestion to complete...")
     
     # Wait for ingestion to complete
-    for attempt in range(POLL_ATTEMPTS):
+    expected_offset = str(MAX_ROWS - 1)
+    timeout_seconds = POLL_ATTEMPTS * (POLL_INTERVAL_MS / 1000)
+    
+    try:
+        channel.wait_for_commit(
+            token_checker=lambda token: token is not None and int(token) >= int(expected_offset),
+            timeout_seconds=int(timeout_seconds)
+        )
         latest_offset = channel.get_latest_committed_offset_token()
         print(f"Latest offset token: {latest_offset}")
-        
-        if latest_offset == str(MAX_ROWS - 1):
-            print("All data committed successfully")
-            break
-        
-        time.sleep(POLL_INTERVAL_MS / 1000)
-    else:
-        raise Exception("Ingestion failed after all attempts")
+        print("All data committed successfully")
+    except TimeoutError:
+        raise Exception("Ingestion failed: timeout waiting for commit")
     
     # Close resources
     channel.close()

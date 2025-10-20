@@ -39,11 +39,11 @@ Create a `profile.json` file in the root of the `java-example` directory with yo
 
 ```json
 {
-  "url": "https://<account>.snowflakecomputing.com",
+  "account": "<account>",
   "user": "your_username",
+  "url": "https://<account>.<locator>.snowflakecomputing.com:443",
   "private_key": "your_private_key_path_or_content",
-  "role": "your_role",
-  "authenticator": "snowflake_jwt"
+  "role": "your_role"
 }
 ```
 
@@ -83,7 +83,7 @@ mvn clean compile exec:java -Dexec.mainClass="com.snowflake.example.StreamingIng
    - `c1`: Integer counter
    - `c2`: String representation of the counter
    - `ts`: Current timestamp
-4. **Waits for Completion** - Polls the channel status to ensure all data has been committed
+4. **Waits for Completion** - Uses the `waitForCommit` API to wait for all data to be committed
 5. **Closes Resources** - Properly closes the channel and client
 
 ## Expected Output

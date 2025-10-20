@@ -1,8 +1,7 @@
 {
-  "url": "https://<account>.snowflakecomputing.com",
+  "account": "<account>",
   "user": "your_username",
-  "private_key": "path_to_private_key.pem",
-  "role": "your_role",
-  "authenticator": "snowflake_jwt"
+  "url": "https://<account>.<locator>.snowflakecomputing.com:443",
+  "private_key": "path_to_private_key.pem"
 }
 

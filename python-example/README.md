@@ -4,7 +4,7 @@ This example demonstrates how to use the Snowflake Streaming Ingest SDK in Pytho
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- Python 3.9 or higher
 - pip (Python package manager)
 - A Snowflake account with appropriate permissions
 - A Snowflake table to ingest data into
@@ -54,11 +54,11 @@ Create a `profile.json` file in the root of the `python-example` directory with 
 
 ```json
 {
-  "url": "https://<account>.snowflakecomputing.com",
+  "account": "<account>",
   "user": "your_username",
+  "url": "https://<account>.<locator>.snowflakecomputing.com:443",
   "private_key": "your_private_key_path_or_content",
-  "role": "your_role",
-  "authenticator": "snowflake_jwt"
+  "role": "your_role"
 }
 ```
 
@@ -86,7 +86,7 @@ python streaming_ingest_example.py
    - `c1`: Integer counter
    - `c2`: String representation of the counter
    - `ts`: Current timestamp
-4. **Waits for Completion** - Polls the channel status to ensure all data has been committed
+4. **Waits for Completion** - Uses the `wait_for_commit` API to wait for all data to be committed
 5. **Closes Resources** - Properly closes the channel and client
 
 ## Expected Output
@@ -129,6 +129,6 @@ The script sets this to `warn` by default to reduce output noise.
 
 ## Additional Resources
 
-- [Snowflake Streaming Ingest SDK Documentation](https://docs.snowflake.com/en/user-guide/data-load-snowpipe-streaming)
-- [Snowflake Ingest Python SDK on PyPI](https://pypi.org/project/snowflake-ingest/)
+- [Snowflake Streaming Ingest SDK Documentation](https://docs.snowflake.com/en/user-guide/snowpipe-streaming/snowpipe-streaming-high-performance-overview)
+- [Snowflake Ingest Python SDK on PyPI](https://pypi.org/project/snowpipe-streaming/)
 
