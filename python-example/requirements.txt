@@ -1,0 +1,2 @@
+# Snowflake Streaming Ingest SDK
+snowpipe-streaming
