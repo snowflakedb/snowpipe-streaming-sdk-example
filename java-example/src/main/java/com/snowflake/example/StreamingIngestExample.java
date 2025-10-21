@@ -55,7 +55,7 @@ public class StreamingIngestExample {
                 try (SnowflakeStreamingIngestChannel channel = client.openChannel(
                         "MY_CHANNEL_" + UUID.randomUUID(), "0").getChannel()) {
 
-                    System.out.println("Channel opened: " + channel.getName());
+                    System.out.println("Channel opened: " + channel.getChannelName());
                     System.out.println("Ingesting " + MAX_ROWS + " rows...");
 
                     // Ingest rows
