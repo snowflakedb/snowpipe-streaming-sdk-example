@@ -40,63 +40,62 @@ public class StreamingIngestExample {
             jsonNode.fields().forEachRemaining(entry ->
                 props.put(entry.getKey(), entry.getValue().asText()));
 
-            // Create Snowflake Streaming Ingest Client
-            SnowflakeStreamingIngestClient client = SnowflakeStreamingIngestClientFactory.builder(
-                "MY_CLIENT_" + UUID.randomUUID(),
-                "MY_DATABASE",
-                "MY_SCHEMA",
-                "MY_PIPE")
-                .setProperties(props)
-                .build();
+            // Create Snowflake Streaming Ingest Client using try-with-resources
+            try (SnowflakeStreamingIngestClient client = SnowflakeStreamingIngestClientFactory.builder(
+                    "MY_CLIENT_" + UUID.randomUUID(),
+                    "MY_DATABASE",
+                    "MY_SCHEMA",
+                    "MY_PIPE")
+                    .setProperties(props)
+                    .build()) {
 
-            System.out.println("Client created successfully");
+                System.out.println("Client created successfully");
 
-            // Open a channel for data ingestion
-            SnowflakeStreamingIngestChannel channel = client.openChannel(
-                "MY_CHANNEL_" + UUID.randomUUID(), "0").getChannel();
+                // Open a channel for data ingestion using try-with-resources
+                try (SnowflakeStreamingIngestChannel channel = client.openChannel(
+                        "MY_CHANNEL_" + UUID.randomUUID(), "0").getChannel()) {
 
-            System.out.println("Channel opened: " + channel.getName());
-            System.out.println("Ingesting " + MAX_ROWS + " rows...");
+                    System.out.println("Channel opened: " + channel.getName());
+                    System.out.println("Ingesting " + MAX_ROWS + " rows...");
 
-            // Ingest rows
-            for (int i = 1; i <= MAX_ROWS; i++) {
-                String rowId = String.valueOf(i);
-                Map<String, Object> row = Map.of(
-                    "c1", i,
-                    "c2", rowId,
-                    "ts", Instant.now().toEpochMilli() / 1000.0
-                );
-                channel.appendRow(row, rowId);
+                    // Ingest rows
+                    for (int i = 1; i <= MAX_ROWS; i++) {
+                        String rowId = String.valueOf(i);
+                        Map<String, Object> row = Map.of(
+                            "c1", i,
+                            "c2", rowId,
+                            "ts", Instant.now().toEpochMilli() / 1000.0
+                        );
+                        channel.appendRow(row, rowId);
 
-                // Print progress every 10,000 rows
-                if (i % 10_000 == 0) {
-                    System.out.println("Ingested " + i + " rows...");
-                }
-            }
+                        // Print progress every 10,000 rows
+                        if (i % 10_000 == 0) {
+                            System.out.println("Ingested " + i + " rows...");
+                        }
+                    }
 
-            System.out.println("All rows submitted. Waiting for ingestion to complete...");
+                    System.out.println("All rows submitted. Waiting for ingestion to complete...");
 
-            // Wait for ingestion to complete
-            int expectedOffset = MAX_ROWS;
-            long timeoutMillis = POLL_ATTEMPTS * POLL_INTERVAL_MS;
-            
-            try {
-                channel.waitForCommit(
-                    token -> token != null && Integer.parseInt(token) >= expectedOffset,
-                    java.time.Duration.ofMillis(timeoutMillis)
-                ).get();
-                
-                String latestOffset = channel.getLatestCommittedOffsetToken();
-                System.out.println("Latest offset token: " + latestOffset);
-                System.out.println("All data committed successfully");
-            } catch (java.util.concurrent.ExecutionException e) {
-                throw new RuntimeException("Ingestion failed: " + e.getCause().getMessage(), e);
-            }
+                    // Wait for ingestion to complete
+                    int expectedOffset = MAX_ROWS;
+                    long timeoutMillis = POLL_ATTEMPTS * POLL_INTERVAL_MS;
+                    
+                    try {
+                        channel.waitForCommit(
+                            token -> token != null && Integer.parseInt(token) >= expectedOffset,
+                            java.time.Duration.ofMillis(timeoutMillis)
+                        ).get();
+                        
+                        String latestOffset = channel.getLatestCommittedOffsetToken();
+                        System.out.println("Latest offset token: " + latestOffset);
+                        System.out.println("All data committed successfully");
+                    } catch (java.util.concurrent.ExecutionException e) {
+                        throw new RuntimeException("Ingestion failed: " + e.getCause().getMessage(), e);
+                    }
+                } // Channel automatically closed here
 
-            // Close resources
-            channel.close();
-            client.close();
-            System.out.println("Data ingestion completed");
+                System.out.println("Data ingestion completed");
+            } // Client automatically closed here
 
         } catch (IOException | InterruptedException e) {
             System.err.println("Error during data ingestion: " + e.getMessage());

@@ -27,60 +27,59 @@ POLL_INTERVAL_MS = 1000
 def main():
     """Main function to demonstrate streaming data ingestion."""
     
-    # Create Snowflake Streaming Ingest Client
-    client = StreamingIngestClient(
+    # Create Snowflake Streaming Ingest Client using context manager
+    with StreamingIngestClient(
         client_name=f"MY_CLIENT_{uuid.uuid4()}",
         db_name="MY_DATABASE",
         schema_name="MY_SCHEMA",
         pipe_name="MY_PIPE",
         profile_json="profile.json"
-    )
-    
-    print("Client created successfully")
-    
-    # Open a channel for data ingestion
-    channel, status = client.open_channel(f"MY_CHANNEL_{uuid.uuid4()}")
-    print(f"Channel opened: {channel.channel_name}")
-    
-    # Ingest rows
-    print(f"Ingesting {MAX_ROWS} rows...")
-    for i in range(MAX_ROWS):
-        row_id = str(i)
-        channel.append_row(
-            {
-                "c1": i,
-                "c2": row_id,
-                "ts": datetime.now()
-            },
-            row_id
-        )
+    ) as client:
         
-        # Print progress every 10,000 rows
-        if (i + 1) % 10_000 == 0:
-            print(f"Ingested {i + 1} rows...")
+        print("Client created successfully")
+        
+        # Open a channel for data ingestion using context manager
+        with client.open_channel(f"MY_CHANNEL_{uuid.uuid4()}")[0] as channel:
+            print(f"Channel opened: {channel.channel_name}")
+            
+            # Ingest rows
+            print(f"Ingesting {MAX_ROWS} rows...")
+            for i in range(MAX_ROWS):
+                row_id = str(i)
+                channel.append_row(
+                    {
+                        "c1": i,
+                        "c2": row_id,
+                        "ts": datetime.now()
+                    },
+                    row_id
+                )
+                
+                # Print progress every 10,000 rows
+                if (i + 1) % 10_000 == 0:
+                    print(f"Ingested {i + 1} rows...")
+            
+            print("All rows submitted. Waiting for ingestion to complete...")
+            
+            # Wait for ingestion to complete
+            expected_offset = str(MAX_ROWS - 1)
+            timeout_seconds = POLL_ATTEMPTS * (POLL_INTERVAL_MS / 1000)
+            
+            try:
+                channel.wait_for_commit(
+                    token_checker=lambda token: token is not None and int(token) >= int(expected_offset),
+                    timeout_seconds=int(timeout_seconds)
+                )
+                latest_offset = channel.get_latest_committed_offset_token()
+                print(f"Latest offset token: {latest_offset}")
+                print("All data committed successfully")
+            except TimeoutError:
+                raise Exception("Ingestion failed: timeout waiting for commit")
+        
+        # Channel automatically closed here
+        print("Data ingestion completed")
     
-    print("All rows submitted. Waiting for ingestion to complete...")
-    
-    # Wait for ingestion to complete
-    expected_offset = str(MAX_ROWS - 1)
-    timeout_seconds = POLL_ATTEMPTS * (POLL_INTERVAL_MS / 1000)
-    
-    try:
-        channel.wait_for_commit(
-            token_checker=lambda token: token is not None and int(token) >= int(expected_offset),
-            timeout_seconds=int(timeout_seconds)
-        )
-        latest_offset = channel.get_latest_committed_offset_token()
-        print(f"Latest offset token: {latest_offset}")
-        print("All data committed successfully")
-    except TimeoutError:
-        raise Exception("Ingestion failed: timeout waiting for commit")
-    
-    # Close resources
-    channel.close()
-    client.close()
-    
-    print("Data ingestion completed")
+    # Client automatically closed here
 
 
 if __name__ == "__main__":
