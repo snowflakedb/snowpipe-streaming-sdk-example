@@ -86,7 +86,7 @@ python streaming_ingest_example.py
    - `c1`: Integer counter
    - `c2`: String representation of the counter
    - `ts`: Current timestamp
-4. **Waits for Completion** - Uses the `wait_for_commit` API to wait for all data to be committed
+4. **Waits for Completion** - Polls the channel status to ensure all data has been committed
 5. **Closes Resources** - Properly closes the channel and client
 
 ## Expected Output

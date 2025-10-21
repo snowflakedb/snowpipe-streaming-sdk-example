@@ -83,7 +83,7 @@ mvn clean compile exec:java -Dexec.mainClass="com.snowflake.example.StreamingIng
    - `c1`: Integer counter
    - `c2`: String representation of the counter
    - `ts`: Current timestamp
-4. **Waits for Completion** - Uses the `waitForCommit` API to wait for all data to be committed
+4. **Waits for Completion** - Polls the channel status to ensure all data has been committed
 5. **Closes Resources** - Properly closes the channel and client
 
 ## Expected Output

@@ -77,20 +77,20 @@ public class StreamingIngestExample {
                     System.out.println("All rows submitted. Waiting for ingestion to complete...");
 
                     // Wait for ingestion to complete
-                    int expectedOffset = MAX_ROWS;
-                    long timeoutMillis = POLL_ATTEMPTS * POLL_INTERVAL_MS;
-                    
-                    try {
-                        channel.waitForCommit(
-                            token -> token != null && Integer.parseInt(token) >= expectedOffset,
-                            java.time.Duration.ofMillis(timeoutMillis)
-                        ).get();
-                        
-                        String latestOffset = channel.getLatestCommittedOffsetToken();
+                    for (int attempt = 1; attempt <= POLL_ATTEMPTS; attempt++) {
+                        String latestOffset = channel.getChannelStatus().getLatestOffsetToken();
                         System.out.println("Latest offset token: " + latestOffset);
-                        System.out.println("All data committed successfully");
-                    } catch (java.util.concurrent.ExecutionException e) {
-                        throw new RuntimeException("Ingestion failed: " + e.getCause().getMessage(), e);
+
+                        if (latestOffset != null && Integer.parseInt(latestOffset) >= MAX_ROWS) {
+                            System.out.println("All data committed successfully");
+                            break;
+                        }
+
+                        if (attempt == POLL_ATTEMPTS) {
+                            throw new RuntimeException("Ingestion failed after all attempts");
+                        }
+
+                        Thread.sleep(POLL_INTERVAL_MS);
                     }
                 } // Channel automatically closed here
 
